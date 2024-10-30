@@ -1,0 +1,70 @@
+---
+title: "hw_4"
+author: "LIN"
+date: "2024-10-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## libr
+```{r}
+library(tidyverse)
+library(countrycode)
+library(sf)
+library(here)
+library(ggplot2)
+library(readr)
+library(tidyr)
+library(dplyr)
+```
+
+
+## read data
+```{r}
+World_Countries <- st_read(here("Data","World_Countries_(Generalized)_9029012925078512962.geojson"))
+Inequality_Data <- read_csv(here("Data", "HDR23-24_Composite_indices_complete_time_series.csv"))
+
+names(World_Countries)
+names(Inequality_Data)
+```
+
+
+## process data
+```{r}
+gender_inequality <- Inequality_Data %>%
+  select(iso3, contains("gii"))
+
+gender_inequality_new <- gender_inequality %>%
+   mutate(gii_2019_2010 = gii_2019 - gii_2010)
+
+World_Countries_new <- World_Countries %>%
+  mutate(ISO3 = countrycode(ISO,"iso2c","iso3c"))
+
+world_gender_inequality <- World_Countries_new %>%
+  left_join(gender_inequality_new, by = c("ISO3" = "iso3"))
+```
+
+
+## plot map
+```{r}
+ggplot(world_gender_inequality) + 
+  geom_sf(aes(fill = gii_2019_2010), 
+          color = "black", 
+          size = 0.1) +
+  scale_fill_gradient2(low = "darkgreen",
+                       high = "red", 
+                       mid = "white", 
+                       midpoint = 0,
+                       name = "GII Difference") + 
+  theme_minimal() + 
+  labs(title = " World Gender Inequality Difference (2010 and 2019)") + 
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+
